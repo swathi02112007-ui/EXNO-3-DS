@@ -343,4 +343,13 @@ Final Transformed Data:
 2                 -1.060514               -1.693375  
 3                 -0.924281               -1.812372  
 4                 -1.200000               -1.999000
-
+![alt text](hist_boxcox_transformed.png)
+![alt text](hist_log_transformed.png)
+![alt text](hist_reciprocal_transformed.png)
+![alt text](hist_sqrt_transformed.png)
+![alt text](hist_square_transformed.png)
+![alt text](hist_yeojohnson_transformed.png)
+![alt text](qq_after_high_neg.png)
+![alt text](qq_after_moderate_neg.png)
+![alt text](qq_before_high_neg.png)
+![alt text](qq_before_moderate_neg.png)
