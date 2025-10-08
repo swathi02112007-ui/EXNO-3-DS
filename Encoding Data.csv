@@ -1,11 +1,195 @@
-id,bin_1,bin_2,nom_0,ord_2
-0,F,N,Red,Hot
-1,F,Y,Blue,Warm
-2,F,N,Blue,Cold
-3,F,N,Green,Warm
-4,T,N,Red,Cold
-5,T,N,Green,Hot
-6,F,N,Red,Cold
-7,T,N,Red,Cold
-8,F,N,Blue,Warm
-9,F,Y,Red,Hot
+# -*- coding: utf-8 -*-
+""" 
+EXNO3: FEATURE ENCODING & FEATURE TRANSFORMATION
+"""
+
+# ==========================================
+# IMPORT LIBRARIES
+# ==========================================
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
+import numpy as np # pyright: ignore[reportMissingImports]
+import matplotlib.pyplot as plt # pyright: ignore[reportMissingModuleSource]
+import seaborn as sns # pyright: ignore[reportMissingModuleSource]
+import statsmodels.api as sm # pyright: ignore[reportMissingImports]
+from scipy import stats # pyright: ignore[reportMissingImports]
+
+# ==========================================
+# LOAD DATA
+# ==========================================
+df = pd.read_csv("Encoding Data.csv")
+print("Original Data:")
+display(df) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 1️⃣ ORDINAL ENCODER
+# ==========================================
+from sklearn.preprocessing import OrdinalEncoder # pyright: ignore[reportMissingModuleSource]
+
+print("\n--- ORDINAL ENCODING ---")
+
+# Define order for ordinal column
+pm = ['Cold', 'Warm', 'Hot']   # Ensure correct order
+
+# Create and fit encoder
+e1 = OrdinalEncoder(categories=[pm])
+
+# Apply encoding to 'ord_2' column
+df['ord_2_encoded'] = e1.fit_transform(df[['ord_2']])
+
+print("After Ordinal Encoding:")
+display(df) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 2️⃣ LABEL ENCODER
+# ==========================================
+from sklearn.preprocessing import LabelEncoder # pyright: ignore[reportMissingModuleSource]
+
+print("\n--- LABEL ENCODING ---")
+
+le = LabelEncoder()
+dfc = df.copy()
+
+# Example: Encoding 'nom_0' column
+dfc['nom_0_encoded'] = le.fit_transform(dfc['nom_0'])
+
+print("After Label Encoding:")
+display(dfc) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 3️⃣ ONE-HOT ENCODER
+# ==========================================
+from sklearn.preprocessing import OneHotEncoder # pyright: ignore[reportMissingModuleSource]
+
+print("\n--- ONE-HOT ENCODING ---")
+
+df2 = df.copy()
+ohe = OneHotEncoder(sparse=False, drop='first')  # drop='first' avoids dummy trap
+
+# Fit and transform
+encoded = ohe.fit_transform(df2[['nom_0']])
+
+# Convert to DataFrame
+encoded_df = pd.DataFrame(encoded, columns=ohe.get_feature_names_out(['nom_0']))
+
+# Concatenate with original DataFrame
+df2 = pd.concat([df2, encoded_df], axis=1)
+
+print("After One-Hot Encoding:")
+display(df2) # pyright: ignore[reportUndefinedVariable]
+
+# Or simply using pandas:
+print("Using pd.get_dummies:")
+display(pd.get_dummies(df2, columns=["nom_0"], drop_first=True)) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 4️⃣ BINARY ENCODER
+# ==========================================
+print("\n--- BINARY ENCODING ---")
+
+##!pip install --quiet category_encoders
+from category_encoders import BinaryEncoder  # pyright: ignore[reportMissingImports]
+
+df_bin = pd.read_csv("/content/data.csv")
+print("Original Binary Encoding Data:")
+display(df_bin) # pyright: ignore[reportUndefinedVariable]
+
+be = BinaryEncoder(cols=['nom_0'])
+df_bin_encoded = be.fit_transform(df_bin)
+
+print("After Binary Encoding:")
+display(df_bin_encoded) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 5️⃣ TARGET ENCODER
+# ==========================================
+print("\n--- TARGET ENCODING ---")
+
+from category_encoders import TargetEncoder # pyright: ignore[reportMissingImports]
+
+te = TargetEncoder()
+
+cc = df.copy()
+
+# For demonstration, create a fake target column
+cc['target'] = np.random.randint(0, 2, size=len(cc))
+
+# Apply Target Encoding
+cc['nom_0_target_encoded'] = te.fit_transform(cc['nom_0'], cc['target'])
+
+print("After Target Encoding:")
+display(cc) # pyright: ignore[reportUndefinedVariable]
+
+# ==========================================
+# 6️⃣ FEATURE TRANSFORMATION
+# ==========================================
+print("\n--- FEATURE TRANSFORMATION ---")
+
+df = pd.read_csv("/content/Data_to_Transform.csv")
+
+# Check skewness
+print("Skewness before transformation:")
+print(df.skew())
+
+# ------------------------------------------
+# LOG TRANSFORMATION
+# ------------------------------------------
+df['Log_Transformed'] = np.log1p(df['Moderate Positive Skew'])
+
+# ------------------------------------------
+# RECIPROCAL TRANSFORMATION
+# ------------------------------------------
+df['Reciprocal_Transformed'] = 1 / (df['Moderate Positive Skew'] + 1)
+
+# ------------------------------------------
+# SQUARE ROOT TRANSFORMATION
+# ------------------------------------------
+df['Sqrt_Transformed'] = np.sqrt(df['Moderate Positive Skew'])
+
+# ------------------------------------------
+# SQUARE TRANSFORMATION
+# ------------------------------------------
+df['Square_Transformed'] = np.square(df['Moderate Positive Skew'])
+
+# ------------------------------------------
+# BOXCOX TRANSFORMATION (Requires all positive values)
+# ------------------------------------------
+df['BoxCox_Transformed'], _ = stats.boxcox(df['Moderate Positive Skew'] + 1)
+
+# ------------------------------------------
+# YEO-JOHNSON TRANSFORMATION
+# ------------------------------------------
+from sklearn.preprocessing import PowerTransformer # pyright: ignore[reportMissingModuleSource]
+qt = PowerTransformer(method='yeo-johnson')
+df['YeoJohnson_Transformed'] = qt.fit_transform(df[['Highly Negative Skew']])
+
+# ==========================================
+# Q-Q PLOTS
+# ==========================================
+print("\n--- Q-Q PLOTS ---")
+
+# Before transformation
+sm.qqplot(df['Moderate Negative Skew'], line='45')
+plt.title("Before Transformation - Moderate Negative Skew")
+plt.show()
+
+# After transformation
+df['Moderate Negative Skew_1'] = qt.fit_transform(df[['Moderate Negative Skew']])
+sm.qqplot(df['Moderate Negative Skew_1'], line='45')
+plt.title("After Transformation - Moderate Negative Skew")
+plt.show()
+
+# Highly Negative Skew transformation
+df['Highly Negative Skew_1'] = qt.fit_transform(df[['Highly Negative Skew']])
+sm.qqplot(df['Highly Negative Skew'], line='45')
+plt.title("Before Transformation - Highly Negative Skew")
+plt.show()
+
+sm.qqplot(df['Highly Negative Skew_1'], line='45')
+plt.title("After Transformation - Highly Negative Skew")
+plt.show()
+
+# ==========================================
+# FINAL OUTPUT
+# ==========================================
+print("\nFinal Transformed Data:")
+display(df) # pyright: ignore[reportUndefinedVariable]
